@@ -1,0 +1,97 @@
+/* ============================================================
+   tailwind.css — Ponto de entrada do Tailwind CSS v4
+   Arquivo CSS puro (sem Sass) para compatibilidade com Tailwind v4
+   ============================================================ */
+
+@import "tailwindcss";
+
+/* Leaflet importado como CSS puro junto com o Tailwind */
+@import "leaflet/dist/leaflet.css";
+
+/* ── Tema customizado: dark mode Vercel/Stripe com verde-neon ────── */
+@theme {
+  --color-neon-green: #22c55e;
+  --color-neon-green-glow: rgba(34, 197, 94, 0.3);
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Leaflet dark overrides ──────────────────────────────────────── */
+.leaflet-popup-content-wrapper {
+  background: #18181b !important;
+  color: #e4e4e7 !important;
+  border: 1px solid #27272a !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5) !important;
+}
+
+.leaflet-popup-tip {
+  background: #18181b !important;
+}
+
+.leaflet-popup-close-button {
+  color: #71717a !important;
+}
+
+.leaflet-control-zoom a {
+  background: #18181b !important;
+  color: #e4e4e7 !important;
+  border-color: #27272a !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: #27272a !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(9,9,11,0.8) !important;
+  color: #52525b !important;
+  font-size: 10px !important;
+}
+
+.leaflet-control-attribution a {
+  color: #22c55e !important;
+}
+
+/* ── View Transitions ────────────────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+::view-transition-new(root) {
+  animation: fade-in 200ms ease-out;
+}
+
+/* ── Reset dark ──────────────────────────────────────────────────── */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Previne o bounce scroll do iOS no body — o scroll fica nos containers */
+  overflow: hidden;
+  height: 100%;
+}
+
+body {
+  background-color: #09090b;
+  color: #fafafa;
+  height: 100%;
+  /* Previne seleção de texto acidental ao pressionar elementos */
+  -webkit-user-select: none;
+  user-select: none;
+  /* Remove delay de 300ms em taps (já coberto por touch-action nos botões) */
+  touch-action: pan-y;
+  /* Scroll suave nativo no iOS */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+}
+
+/* Permite seleção em campos que precisam (ex: coordenadas para copiar) */
+.selectable {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #18181b; }
+::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #52525b; }
