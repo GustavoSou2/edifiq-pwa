@@ -47,21 +47,21 @@ export class EntregadorComponent implements OnDestroy {
 
   readonly statusColor = computed(() => {
     const map: Record<StatusEnvio, string> = {
-      inativo:       'text-zinc-400',
-      capturando:    'text-green-400',
-      enviando:      'text-yellow-400',
-      sincronizando: 'text-blue-400',
-      erro:          'text-red-400',
+      inativo:       'text-slate-400',
+      capturando:    'text-green-700',
+      enviando:      'text-amber-600',
+      sincronizando: 'text-blue-600',
+      erro:          'text-red-600',
     };
     return map[this.statusEnvio()];
   });
 
   readonly statusDot = computed(() => {
     const map: Record<StatusEnvio, string> = {
-      inativo:       'bg-zinc-500',
-      capturando:    'bg-green-400 animate-pulse',
-      enviando:      'bg-yellow-400 animate-pulse',
-      sincronizando: 'bg-blue-400 animate-pulse',
+      inativo:       'bg-slate-300',
+      capturando:    'bg-green-500 animate-pulse',
+      enviando:      'bg-amber-400 animate-pulse',
+      sincronizando: 'bg-blue-500 animate-pulse',
       erro:          'bg-red-500',
     };
     return map[this.statusEnvio()];

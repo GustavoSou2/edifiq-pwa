@@ -1,7 +1,7 @@
 // ============================================================
 // monitoramento.service.ts
-// Serviço que escuta reativamente o nó do Firebase Realtime
-// Database e fornece as coordenadas do motorista ao painel.
+// Escuta o Firebase e acumula o histórico de posições para
+// renderizar o percurso completo no mapa (polyline).
 // ============================================================
 
 import { Injectable } from '@angular/core';
@@ -12,35 +12,64 @@ import { Coordenada } from './rastreamento.service';
 
 const DB_PATH = 'tracking/motorista_001';
 
+// Máximo de pontos no histórico de percurso (evita memória ilimitada)
+const MAX_HISTORICO = 500;
+
 @Injectable({ providedIn: 'root' })
 export class MonitoramentoService {
+
+  // Histórico acumulado de posições — usado para desenhar a polyline
+  private historico: Coordenada[] = [];
+
   /**
-   * Retorna um Observable que emite sempre que o Firebase
-   * disparar uma atualização no nó do motorista.
-   *
-   * O Observable garante cleanup automático ao cancelar
-   * a inscrição (unsubscribe), evitando memory leaks.
+   * Observable que emite a coordenada atual a cada mudança no Firebase.
+   * Internamente acumula o histórico para expor via getHistorico().
    */
   escutarCoordenadas(): Observable<Coordenada | null> {
     return new Observable<Coordenada | null>((observer) => {
       const dbRef: DatabaseReference = ref(firebaseDB, DB_PATH);
 
-      // onValue dispara imediatamente com o valor atual e
-      // depois a cada mudança — comportamento ideal para rastreamento
       const unsubscribe = onValue(
         dbRef,
         (snapshot) => {
           if (snapshot.exists()) {
-            observer.next(snapshot.val() as Coordenada);
+            const coord = snapshot.val() as Coordenada;
+
+            // Acumula posição no histórico de percurso
+            this.adicionarAoHistorico(coord);
+
+            observer.next(coord);
           } else {
             observer.next(null);
           }
         },
-        (error) => observer.error(error)
+        (error) => observer.error(error),
       );
 
-      // Cleanup: ao fazer unsubscribe do Observable, remove o listener
       return () => off(dbRef, 'value', unsubscribe as never);
     });
+  }
+
+  /** Retorna uma cópia do histórico para uso no mapa */
+  getHistorico(): Coordenada[] {
+    return [...this.historico];
+  }
+
+  /** Limpa o histórico (chamado quando a entrega é reiniciada) */
+  limparHistorico(): void {
+    this.historico = [];
+  }
+
+  private adicionarAoHistorico(coord: Coordenada): void {
+    // Evita pontos duplicados consecutivos
+    const ultimo = this.historico[this.historico.length - 1];
+    if (ultimo && ultimo.lat === coord.lat && ultimo.lng === coord.lng) return;
+
+    this.historico.push(coord);
+
+    // Mantém janela deslizante de MAX_HISTORICO pontos
+    if (this.historico.length > MAX_HISTORICO) {
+      this.historico.shift();
+    }
   }
 }
