@@ -23,6 +23,13 @@
             "browser": "src/main.ts",
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": [
+              "faye-websocket",
+              "websocket-driver",
+              "websocket-extensions",
+              "http-parser-js",
+              "leaflet"
+            ],
             "assets": [
               {
                 "glob": "**/*",
