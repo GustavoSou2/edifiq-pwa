@@ -1,164 +1,188 @@
-<!-- ============================================================
-  lista-entregas.component.html — Lista de Entregas do Dia
-  ============================================================ -->
-
-<div class="flex flex-col bg-slate-100"
-     style="min-height:100dvh;
+<!-- lista-entregas — light minimal · Uber × Coinbase × Spotify -->
+<div style="min-height:100dvh;background:#f5f5f5;
             padding-top:env(safe-area-inset-top);
-            padding-left:env(safe-area-inset-left);
-            padding-right:env(safe-area-inset-right);
             padding-bottom:env(safe-area-inset-bottom);">
 
   <!-- ══ HEADER ════════════════════════════════════════════════ -->
-  <header class="shrink-0 bg-white border-b border-slate-200 shadow-sm">
-    <div class="px-4 pt-4 pb-3">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-2xl bg-green-600 flex items-center justify-center shadow-sm">
-            <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-            </svg>
-          </div>
-          <div>
-            <p class="text-base font-extrabold text-slate-900 leading-none">EdifIQ</p>
-            <p class="text-xs text-slate-400 mt-0.5 capitalize">{{ dataHoje }}</p>
-          </div>
-        </div>
-
-        <!-- Badge online/offline -->
-        <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold"
-          [ngClass]="isOnline()
-            ? 'bg-green-50 border-green-200 text-green-700'
-            : 'bg-red-50 border-red-200 text-red-600'">
-          <span class="w-1.5 h-1.5 rounded-full"
-            [ngClass]="isOnline() ? 'bg-green-500 animate-pulse' : 'bg-red-400'"></span>
-          {{ isOnline() ? 'Online' : 'Offline' }}
-        </div>
-      </div>
-
-      <!-- Cards de resumo -->
-      <div class="grid grid-cols-4 gap-2 mt-4">
-        <div class="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center">
-          <p class="text-lg font-black text-slate-800">{{ resumo().total }}</p>
-          <p class="text-[10px] font-semibold text-slate-400 uppercase">Total</p>
-        </div>
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-2.5 text-center">
-          <p class="text-lg font-black text-amber-700">{{ resumo().pendentes }}</p>
-          <p class="text-[10px] font-semibold text-amber-500 uppercase">Pend.</p>
-        </div>
-        <div class="bg-green-50 border border-green-200 rounded-xl p-2.5 text-center">
-          <p class="text-lg font-black text-green-700">{{ resumo().entregues }}</p>
-          <p class="text-[10px] font-semibold text-green-500 uppercase">Feito</p>
-        </div>
-        <div class="bg-red-50 border border-red-200 rounded-xl p-2.5 text-center">
-          <p class="text-lg font-black text-red-600">{{ resumo().problemas }}</p>
-          <p class="text-[10px] font-semibold text-red-400 uppercase">Prob.</p>
-        </div>
+  <div class="px-5 pt-6 pb-5" style="background:#ffffff;border-bottom:1px solid #e5e5e5;">
+    <div class="flex items-center justify-between mb-1">
+      <p class="text-xs font-semibold tracking-widest uppercase" style="color:#a3a3a3;">{{ dataHoje }}</p>
+      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
+           [style]="isOnline()
+             ? 'background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0'
+             : 'background:#fee2e2;color:#dc2626;border:1px solid #fecaca'">
+        <span class="w-1.5 h-1.5 rounded-full"
+          [ngClass]="isOnline() ? 'bg-green-600 animate-pulse' : 'bg-red-500'"></span>
+        {{ isOnline() ? 'Online' : 'Offline' }}
       </div>
     </div>
-  </header>
+    <h1 class="text-2xl font-black tracking-tight mt-0.5" style="color:#0a0a0a;letter-spacing:-0.5px;">
+      Minhas Entregas
+    </h1>
 
-  <!-- ══ LISTA ═════════════════════════════════════════════════ -->
-  <div class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+    <!-- Progresso -->
+    <div class="mt-4 p-4 rounded-2xl" style="background:#f9f9f9;border:1px solid #e5e5e5;">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-semibold" style="color:#737373;">Progresso do dia</span>
+        <span class="text-sm font-black" style="color:#0a0a0a;">
+          {{ resumo().entregues }}<span style="color:#a3a3a3;">/{{ resumo().total }}</span>
+        </span>
+      </div>
+      <div class="h-1.5 rounded-full overflow-hidden" style="background:#e5e5e5;">
+        <div class="h-full rounded-full transition-all duration-700" style="background:#16a34a;"
+             [style.width.%]="progresso()"></div>
+      </div>
+      <div class="grid grid-cols-4 gap-2 mt-4">
+        @for (item of [
+          {v: resumo().total,     l:'Total',    c:'#0a0a0a'},
+          {v: resumo().pendentes, l:'Pendente', c:'#d97706'},
+          {v: resumo().entregues, l:'Feito',    c:'#16a34a'},
+          {v: resumo().problemas, l:'Prob.',    c:'#dc2626'}
+        ]; track item.l) {
+          <div class="text-center">
+            <p class="text-xl font-black leading-none" [style.color]="item.c">{{ item.v }}</p>
+            <p class="text-[10px] font-semibold mt-1 tracking-wider uppercase" style="color:#a3a3a3;">{{ item.l }}</p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Notificações -->
+    @if (permissaoNotif() === 'pendente') {
+      <button (click)="solicitarNotificacoes()" [disabled]="solicitandoPermissao()"
+        class="w-full mt-3 flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all active:scale-[0.98]"
+        style="background:#f0fdf4;border:1px solid #bbf7d0;">
+        <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+             style="background:#dcfce7;border:1px solid #bbf7d0;">
+          @if (solicitandoPermissao()) {
+            <div class="w-3.5 h-3.5 border-2 rounded-full animate-spin"
+                 style="border-color:#bbf7d0;border-top-color:#16a34a;"></div>
+          } @else {
+            <svg class="w-3.5 h-3.5" style="color:#16a34a;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
+            </svg>
+          }
+        </div>
+        <div class="flex-1">
+          <p class="text-xs font-bold" style="color:#16a34a;">Ativar notificações push</p>
+          <p class="text-[11px] mt-0.5" style="color:#737373;">Receba novas entregas mesmo com o app fechado</p>
+        </div>
+        <svg class="w-4 h-4 shrink-0" style="color:#a3a3a3;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+        </svg>
+      </button>
+    }
+    @if (permissaoNotif() === 'concedida') {
+      <div class="flex items-center gap-2 mt-3">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span>
+        <span class="text-[11px] font-semibold" style="color:#737373;">Notificações ativas</span>
+      </div>
+    }
+    @if (permissaoNotif() === 'negada') {
+      <div class="flex items-center gap-2 mt-3">
+        <span class="text-[11px]" style="color:#a3a3a3;">🔕 Notificações bloqueadas nas configurações do browser</span>
+      </div>
+    }
+  </div>
+
+  <!-- ══ LISTA ════════════════════════════════════════════════ -->
+  <div class="px-4 pt-4 space-y-2.5 pb-8">
 
     @if (!isOnline()) {
-      <div class="bg-amber-50 border border-amber-300 rounded-2xl p-3.5 flex items-center gap-3">
-        <span class="text-lg shrink-0">📶</span>
-        <p class="text-xs text-amber-700 font-medium">Sem conexão. Dados podem estar desatualizados.</p>
+      <div class="flex items-center gap-3 px-4 py-3 rounded-xl"
+           style="background:#fffbeb;border:1px solid #fde68a;">
+        <span class="text-base">📶</span>
+        <p class="text-xs font-semibold" style="color:#d97706;">Sem conexão — dados podem estar desatualizados</p>
       </div>
     }
 
-    @for (entrega of entregas.entregas(); track entrega.id) {
-      <button
-        (click)="abrirEntrega(entrega)"
-        class="w-full text-left bg-white rounded-2xl border shadow-sm active:scale-[0.99] transition-all duration-100 overflow-hidden"
-        [ngClass]="entrega.status === 'problema' ? 'border-red-200' : 'border-slate-200'"
-        style="touch-action:manipulation;-webkit-tap-highlight-color:transparent;">
+    @for (e of entregas.entregas(); track e.id) {
+      <button (click)="abrirEntrega(e)"
+        class="w-full text-left rounded-2xl overflow-hidden transition-all duration-150 active:scale-[0.985]"
+        style="background:#ffffff;border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,0.04);">
 
-        <!-- Faixa lateral colorida por status -->
         <div class="flex">
-          <div class="w-1.5 shrink-0 rounded-l-2xl"
-            [ngClass]="{
-              'bg-amber-400': entrega.status === 'pendente',
-              'bg-blue-500':  entrega.status === 'em_rota',
-              'bg-green-500': entrega.status === 'entregue',
-              'bg-red-500':   entrega.status === 'problema'
-            }">
+          <!-- Borda lateral de status -->
+          <div class="w-[3px] shrink-0 rounded-l-2xl"
+               [style.background]="e.status==='pendente'?'#d97706':e.status==='em_rota'?'#2563eb':e.status==='entregue'?'#16a34a':'#dc2626'">
           </div>
 
           <div class="flex-1 p-4">
-
-            <!-- Linha 1: número + badge status -->
-            <div class="flex items-center justify-between mb-2">
+            <!-- Linha 1 -->
+            <div class="flex items-center justify-between gap-2 mb-2.5">
               <div class="flex items-center gap-2">
-                <span class="text-base">{{ iconeStatus(entrega.status) }}</span>
-                <span class="text-xs font-bold text-slate-400 font-mono">{{ entrega.numero }}</span>
+                @if (e.isUrgent) {
+                  <span class="text-[10px] font-black px-2 py-0.5 rounded-full tracking-wide"
+                        style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;">⚡ URGENTE</span>
+                }
+                <span class="text-[11px] font-mono font-semibold" style="color:#a3a3a3;">{{ e.referenceCode }}</span>
               </div>
-              <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full border"
-                [ngClass]="corStatus(entrega.status)">
-                {{ labelStatus(entrega.status) }}
+              <span class="text-[10px] font-black px-2.5 py-1 rounded-full"
+                [style]="e.status==='pendente'?'background:#fef3c7;color:#d97706':
+                         e.status==='em_rota'  ?'background:#dbeafe;color:#2563eb':
+                         e.status==='entregue' ?'background:#dcfce7;color:#16a34a':
+                                                'background:#fee2e2;color:#dc2626'">
+                {{ labelStatus(e.status) }}
               </span>
             </div>
 
-            <!-- Cliente e produto -->
-            <p class="text-sm font-bold text-slate-900 leading-tight">{{ entrega.cliente }}</p>
-            <p class="text-xs text-slate-500 mt-0.5">{{ entrega.produto }}</p>
-
-            <!-- Separador -->
-            <div class="my-3 border-t border-dashed border-slate-100"></div>
+            <!-- Cliente -->
+            <p class="text-sm font-bold leading-tight" style="color:#0a0a0a;">{{ e.cliente }}</p>
+            <p class="text-xs mt-0.5" style="color:#737373;">{{ e.title }}</p>
 
             <!-- Destino -->
-            <div class="flex items-start gap-2">
-              <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center shrink-0 mt-0.5">
-                <svg class="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+            <div class="flex items-center gap-2 mt-3">
+              <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                   style="background:#f0fdf4;border:1px solid #bbf7d0;">
+                <svg class="w-2.5 h-2.5" style="color:#16a34a;" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
                 </svg>
               </div>
               <div class="flex-1 min-w-0">
-                <p class="text-xs font-semibold text-slate-700 leading-tight truncate">
-                  {{ entrega.destino.logradouro }}, {{ entrega.destino.numero }}
+                <p class="text-xs font-semibold truncate" style="color:#404040;">
+                  {{ e.destino.logradouro }}, {{ e.destino.numero }}
                 </p>
-                <p class="text-[11px] text-slate-400">{{ entrega.destino.bairro }} · {{ entrega.destino.cidade }}/{{ entrega.destino.uf }}</p>
+                <p class="text-[11px]" style="color:#a3a3a3;">{{ e.destino.bairro }} · {{ e.destino.cidade }}/{{ e.destino.uf }}</p>
               </div>
             </div>
 
-            <!-- Footer: distância + tempo + previsão -->
-            <div class="flex items-center gap-3 mt-3 pt-2.5 border-t border-slate-100">
-              <div class="flex items-center gap-1">
-                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M3 16.5V9.75M21 16.5V9.75M3 9.75h18" />
+            <!-- Footer chips -->
+            <div class="flex items-center gap-1.5 mt-3 flex-wrap">
+              <span class="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg"
+                    style="background:#f9f9f9;border:1px solid #e5e5e5;color:#737373;">
+                <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <span class="text-[11px] font-semibold text-slate-500">{{ entrega.distanciaKm }} km</span>
-              </div>
-              <div class="flex items-center gap-1">
-                <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="text-[11px] font-semibold text-slate-500">~{{ entrega.tempoEstimadoMin }} min</span>
-              </div>
-              <div class="ml-auto flex items-center gap-1">
-                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" />
-                </svg>
-                <span class="text-[11px] font-bold text-blue-600">{{ entrega.previsaoEntrega }}</span>
-              </div>
+                {{ formatarJanela(e) }}
+              </span>
+              <span class="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg"
+                    style="background:#f9f9f9;border:1px solid #e5e5e5;color:#737373;">
+                {{ e.distanciaKm }}km · ~{{ e.tempoEstimadoMin }}min
+              </span>
+              <span class="ml-auto text-[11px] font-black px-2.5 py-1 rounded-lg"
+                    style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">
+                {{ e.items.length }} itens
+              </span>
             </div>
 
-            <!-- Observação de problema -->
-            @if (entrega.observacao) {
-              <div class="mt-2 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-                <p class="text-[11px] text-red-600 font-medium">⚠️ {{ entrega.observacao }}</p>
+            @if (e.notes && e.status === 'problema') {
+              <div class="mt-2.5 flex items-center gap-2 px-3 py-2 rounded-xl"
+                   style="background:#fef2f2;border:1px solid #fecaca;">
+                <span class="text-xs">⚠️</span>
+                <p class="text-[11px] font-semibold" style="color:#dc2626;">{{ e.notes }}</p>
               </div>
             }
+          </div>
 
+          <!-- Chevron -->
+          <div class="flex items-center pr-4">
+            <svg class="w-4 h-4" style="color:#d4d4d4;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+            </svg>
           </div>
         </div>
       </button>
     }
-
-    <!-- Espaço extra no final para não sobrepor conteúdo -->
-    <div class="h-4"></div>
 
   </div>
 </div>

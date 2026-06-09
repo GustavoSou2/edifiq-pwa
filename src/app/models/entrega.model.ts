@@ -1,13 +1,22 @@
 // ============================================================
-// entrega.model.ts — Modelo de domínio para uma entrega
-// Representa o contrato que viria da API Java/MySQL principal
+// entrega.model.ts
+// Espelha o contrato CreateOrderRequest / CreateOrderItemRequest
+// da API Java — pronto para substituir o mock por HTTP call.
 // ============================================================
 
-export type StatusEntrega =
-  | 'pendente'      // aguardando o motorista aceitar
-  | 'em_rota'       // motorista a caminho
-  | 'entregue'      // concluída
-  | 'problema';     // falha na entrega
+export type StatusEntrega = 'pendente' | 'em_rota' | 'entregue' | 'problema';
+
+export interface ItemEntrega {
+  id: string;
+  categoryId?: string;
+  description: string;      // CreateOrderItemRequest.description
+  unit: string;             // ex: "saco", "cx", "m²"
+  quantity: number;         // CreateOrderItemRequest.quantity (BigDecimal)
+  notes?: string;
+  sortOrder?: number;
+  // checklist de finalização
+  conferido: boolean;
+}
 
 export interface EnderecoEntrega {
   logradouro: string;
@@ -21,16 +30,29 @@ export interface EnderecoEntrega {
 
 export interface Entrega {
   id: string;
-  numero: string;          // ex: "PED-2024-001"
+  referenceCode: string;       // CreateOrderRequest.referenceCode
+  title: string;               // CreateOrderRequest.title
   cliente: string;
-  produto: string;
-  peso: string;            // ex: "12 kg"
-  volumes: number;
+  isUrgent: boolean;           // CreateOrderRequest.isUrgent
+  notes?: string;              // CreateOrderRequest.notes
   status: StatusEntrega;
+
+  // Endereços
   origem: EnderecoEntrega;
-  destino: EnderecoEntrega;
-  distanciaKm: number;     // distância estimada em linha reta (calculada)
-  tempoEstimadoMin: number;// tempo estimado em minutos (calculado)
-  previsaoEntrega: string; // ex: "14:30"
-  observacao?: string;
+  destino: EnderecoEntrega;    // deliveryAddress / deliveryCity / deliveryState / lat / lng
+
+  // Janela de entrega — CreateOrderRequest.deliveryWindowStart / End
+  deliveryWindowStart: string; // ISO string
+  deliveryWindowEnd: string;
+
+  // Métricas calculadas no frontend
+  distanciaKm: number;
+  tempoEstimadoMin: number;
+
+  // Itens da ordem
+  items: ItemEntrega[];
+
+  // Finalização
+  fotoEntregaBase64?: string;
+  observacaoFinalizacao?: string;
 }

@@ -1,70 +1,56 @@
-<!-- ============================================================
-  app.html — Shell principal · Tema Claro
-  - /entregador: tela cheia sem navegação
-  - /painel: sidebar desktop + bottom nav mobile
-  ============================================================ -->
+<!-- app.html — shell light EdifIQ -->
+<app-notif-banner></app-notif-banner>
 
-<!-- Bottom tab bar — mobile, só no painel -->
 @if (mostrarNav()) {
-  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 flex sm:hidden shadow-lg"
-       style="padding-bottom:env(safe-area-inset-bottom);">
-
-    <a routerLink="/painel"
-       routerLinkActive="text-green-700 bg-green-50"
-       class="flex-1 flex flex-col items-center justify-center py-2.5 gap-1 text-slate-400 transition-colors min-h-[56px]"
+  <!-- Bottom nav mobile -->
+  <nav class="fixed bottom-0 left-0 right-0 z-50 flex sm:hidden"
+       style="background:#ffffff;border-top:1px solid #e5e5e5;
+              padding-bottom:env(safe-area-inset-bottom);
+              box-shadow:0 -4px 24px rgba(0,0,0,0.06);">
+    <a routerLink="/painel" routerLinkActive="text-[#16a34a]"
+       class="flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-colors min-h-[56px]"
+       style="color:#a3a3a3;"
        ariaCurrentWhenActive="page">
       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round"
-          d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/>
       </svg>
-      <span class="text-[10px] font-semibold">Painel</span>
+      <span class="text-[10px] font-bold tracking-wide">PAINEL</span>
     </a>
-
-    <a routerLink="/entregador"
-       routerLinkActive="text-green-700 bg-green-50"
-       class="flex-1 flex flex-col items-center justify-center py-2.5 gap-1 text-slate-400 transition-colors min-h-[56px]"
+    <a routerLink="/entregador" routerLinkActive="text-[#16a34a]"
+       class="flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-colors min-h-[56px]"
+       style="color:#a3a3a3;"
        ariaCurrentWhenActive="page">
       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round"
-          d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/>
       </svg>
-      <span class="text-[10px] font-semibold">Entregador</span>
+      <span class="text-[10px] font-bold tracking-wide">ENTREGAS</span>
     </a>
-
   </nav>
-}
 
-<!-- Sidebar desktop — só no painel -->
-@if (mostrarNav()) {
-  <nav class="hidden sm:flex fixed left-0 top-0 bottom-0 w-16 bg-white border-r border-slate-200 flex-col items-center py-5 gap-1.5 z-50 shadow-sm">
-
-    <div class="w-9 h-9 rounded-xl bg-green-600 flex items-center justify-center mb-5 shadow-sm">
+  <!-- Sidebar desktop -->
+  <nav class="hidden sm:flex fixed left-0 top-0 bottom-0 w-[60px] flex-col items-center py-5 gap-1 z-50"
+       style="background:#ffffff;border-right:1px solid #e5e5e5;box-shadow:2px 0 16px rgba(0,0,0,0.04);">
+    <div class="w-8 h-8 rounded-xl flex items-center justify-center mb-6"
+         style="background:#dcfce7;border:1px solid #bbf7d0;">
       <span class="text-sm">🏗️</span>
     </div>
-
-    <a routerLink="/painel"
-       routerLinkActive="bg-green-50 text-green-700"
-       class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-all"
-       title="Painel de Monitoramento">
+    <a routerLink="/painel" routerLinkActive="text-[#16a34a] bg-[#f0fdf4]"
+       class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-[#f5f5f5]"
+       style="color:#a3a3a3;" title="Painel">
       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round"
-          d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"/>
       </svg>
     </a>
-
-    <a routerLink="/entregador"
-       routerLinkActive="bg-green-50 text-green-700"
-       class="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-all"
-       title="App do Entregador">
+    <a routerLink="/entregador" routerLinkActive="text-[#16a34a] bg-[#f0fdf4]"
+       class="w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:bg-[#f5f5f5]"
+       style="color:#a3a3a3;" title="Entregas">
       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round"
-          d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/>
       </svg>
     </a>
-
   </nav>
 }
 
-<main [class]="mostrarNav() ? 'sm:pl-16 pb-[calc(56px+env(safe-area-inset-bottom))] sm:pb-0' : ''">
+<main [class]="mostrarNav() ? 'sm:pl-[60px] pb-[calc(56px+env(safe-area-inset-bottom))] sm:pb-0' : ''">
   <router-outlet />
 </main>

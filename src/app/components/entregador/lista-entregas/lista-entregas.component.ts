@@ -1,20 +1,12 @@
-// ============================================================
-// lista-entregas.component.ts
-// Tela principal do app do motorista — lista de entregas do dia
-// ============================================================
-
 import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  PLATFORM_ID,
-  Inject,
-  signal,
+  ChangeDetectionStrategy, Component, computed,
+  PLATFORM_ID, Inject, signal, OnInit, inject,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { EntregasService } from '../../../services/entregas.service';
 import { Entrega, StatusEntrega } from '../../../models/entrega.model';
+import { NotificacaoService } from '../../../services/notificacao.service';
 
 @Component({
   selector: 'app-lista-entregas',
@@ -23,31 +15,42 @@ import { Entrega, StatusEntrega } from '../../../models/entrega.model';
   templateUrl: './lista-entregas.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ListaEntregasComponent {
+export class ListaEntregasComponent implements OnInit {
 
-  readonly isOnline = signal(true);
+  // ── inject() no campo — resolve antes do constructor ────────
+  private readonly notifSvc     = inject(NotificacaoService);
+  readonly entregas             = inject(EntregasService);
+  private readonly router       = inject(Router);
 
-  // ── Computed de resumo ───────────────────────────────────────
+  // ── Signals ──────────────────────────────────────────────────
+  readonly isOnline             = signal(true);
+  readonly solicitandoPermissao = signal(false);
+
+  // Expõe diretamente o signal do serviço (referência, não cópia)
+  readonly permissaoNotif = this.notifSvc.permissao;
+
+  // ── Computed ─────────────────────────────────────────────────
   readonly resumo = computed(() => {
-    const lista = this.entregas.entregas();
+    const l = this.entregas.entregas();
     return {
-      total:     lista.length,
-      pendentes: lista.filter((e) => e.status === 'pendente').length,
-      emRota:    lista.filter((e) => e.status === 'em_rota').length,
-      entregues: lista.filter((e) => e.status === 'entregue').length,
-      problemas: lista.filter((e) => e.status === 'problema').length,
+      total:     l.length,
+      pendentes: l.filter((e) => e.status === 'pendente').length,
+      emRota:    l.filter((e) => e.status === 'em_rota').length,
+      entregues: l.filter((e) => e.status === 'entregue').length,
+      problemas: l.filter((e) => e.status === 'problema').length,
     };
+  });
+
+  readonly progresso = computed(() => {
+    const r = this.resumo();
+    return r.total ? Math.round((r.entregues / r.total) * 100) : 0;
   });
 
   readonly dataHoje = new Date().toLocaleDateString('pt-BR', {
     weekday: 'long', day: '2-digit', month: 'long',
   });
 
-  constructor(
-    readonly entregas: EntregasService,
-    private router: Router,
-    @Inject(PLATFORM_ID) private platformId: object,
-  ) {
+  constructor(@Inject(PLATFORM_ID) private platformId: object) {
     if (isPlatformBrowser(this.platformId)) {
       this.isOnline.set(navigator.onLine);
       window.addEventListener('online',  () => this.isOnline.set(true));
@@ -55,39 +58,42 @@ export class ListaEntregasComponent {
     }
   }
 
-  abrirEntrega(entrega: Entrega): void {
-    this.entregas.selecionarEntrega(entrega.id);
-    this.router.navigate(['/entregador/detalhe', entrega.id]);
+  ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId) &&
+        this.notifSvc.permissao() === 'pendente') {
+      setTimeout(() => this.solicitarNotificacoes(), 2000);
+    }
   }
 
-  // Helpers de template
-  corStatus(status: StatusEntrega): string {
-    const map: Record<StatusEntrega, string> = {
-      pendente:  'bg-amber-100 text-amber-700 border-amber-200',
-      em_rota:   'bg-blue-100 text-blue-700 border-blue-200',
-      entregue:  'bg-green-100 text-green-700 border-green-200',
-      problema:  'bg-red-100 text-red-700 border-red-200',
-    };
-    return map[status];
+  async solicitarNotificacoes(): Promise<void> {
+    this.solicitandoPermissao.set(true);
+    const token = await this.notifSvc.solicitarPermissao();
+    this.solicitandoPermissao.set(false);
+
+    if (token) {
+      console.log('[EdifIQ] FCM Token — enviar ao servidor Java:', token);
+      // Em produção:
+      // this.http.post('/api/v1/dispositivos/registrar', { token, motoristaId })
+    }
   }
 
-  labelStatus(status: StatusEntrega): string {
-    const map: Record<StatusEntrega, string> = {
-      pendente:  'Pendente',
-      em_rota:   'Em rota',
-      entregue:  'Entregue',
-      problema:  'Problema',
-    };
-    return map[status];
+  abrirEntrega(e: Entrega): void {
+    this.entregas.selecionarEntrega(e.id);
+    this.router.navigate(['/entregador/detalhe', e.id]);
   }
 
-  iconeStatus(status: StatusEntrega): string {
-    const map: Record<StatusEntrega, string> = {
-      pendente:  '🕐',
-      em_rota:   '🚛',
-      entregue:  '✅',
-      problema:  '⚠️',
-    };
-    return map[status];
+  formatarJanela(e: Entrega): string {
+    const fmt = (iso: string) =>
+      new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return `${fmt(e.deliveryWindowStart)} – ${fmt(e.deliveryWindowEnd)}`;
+  }
+
+  labelStatus(s: StatusEntrega): string {
+    return {
+      pendente: 'Pendente',
+      em_rota:  'Em rota',
+      entregue: 'Entregue',
+      problema: 'Problema',
+    }[s];
   }
 }

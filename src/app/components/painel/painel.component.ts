@@ -118,7 +118,9 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      setTimeout(() => this.inicializarMapa(), 150);
+      requestAnimationFrame(() => {
+        setTimeout(() => this.inicializarMapa(), 50);
+      });
     }
   }
 
@@ -137,6 +139,17 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const L = await import('leaflet');
 
+    // Fix obrigatório para ícones do Leaflet com bundlers (webpack/esbuild)
+    type LeafletIconDefault = typeof L.Icon.Default & {
+      prototype: { _getIconUrl?: () => string };
+    };
+    delete (L.Icon.Default as LeafletIconDefault).prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
+
     this.ngZone.runOutsideAngular(() => {
       this.leafletMap = L.map(el, {
         center: [-23.55052, -46.63331],
@@ -144,37 +157,34 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
         zoomControl: true,
       });
 
-      // Tiles OpenStreetMap
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+      // Tiles CartoDB Positron — minimalista claro, sem poluição visual
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© <a href="https://carto.com">CARTO</a>',
+        subdomains: 'abcd',
         maxZoom: 19,
       }).addTo(this.leafletMap!);
 
-      // Ícone do caminhão
+      // Ícone do caminhão — ponto verde claro
       const icone = L.divIcon({
         className: '',
-        html: `
-          <div style="
-            background:#16a34a;
-            border:3px solid #ffffff;
-            border-radius:50%;
-            width:40px;height:40px;
-            display:flex;align-items:center;justify-content:center;
-            font-size:20px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.25), 0 0 0 4px rgba(22,163,74,0.2);
-          ">🚛</div>`,
-        iconSize: [40, 40],
-        iconAnchor: [20, 20],
+        html: `<div style="
+          width:14px;height:14px;border-radius:50%;
+          background:#16a34a;
+          border:2.5px solid #ffffff;
+          box-shadow:0 2px 8px rgba(22,163,74,0.35), 0 0 0 4px rgba(22,163,74,0.15);
+        "></div>`,
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
       });
 
       this.marcador = L.marker([-23.55052, -46.63331], { icon: icone })
         .addTo(this.leafletMap!)
         .bindPopup('Aguardando posição...');
 
-      // Polyline do percurso — azul vibrante
+      // Polyline do percurso — verde EdifIQ
       this.percursoLine = L.polyline([], {
-        color: '#2563eb',
-        weight: 4,
+        color: '#16a34a',
+        weight: 3,
         opacity: 0.85,
         lineJoin: 'round',
         lineCap: 'round',
