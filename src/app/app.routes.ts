@@ -14,9 +14,17 @@ export const routes: Routes = [
   },
   {
     path: 'entregador',
+    title: 'Minhas Entregas · EdifIQ',
     loadComponent: () =>
-      import('./components/entregador/entregador.component').then((m) => m.EntregadorComponent),
-    title: 'App do Entregador · EdifIQ',
+      import('./components/entregador/lista-entregas/lista-entregas.component')
+        .then((m) => m.ListaEntregasComponent),
+  },
+  {
+    path: 'entregador/detalhe/:id',
+    title: 'Detalhes da Entrega · EdifIQ',
+    loadComponent: () =>
+      import('./components/entregador/detalhe-entrega/detalhe-entrega.component')
+        .then((m) => m.DetalheEntregaComponent),
   },
   {
     path: '**',
