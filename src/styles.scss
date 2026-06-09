@@ -13,19 +13,17 @@
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow: hidden;
-  height: 100%;
+  /* NÃO colocar overflow:hidden aqui — quebra scroll de todas as páginas
+     e impede o Leaflet de calcular dimensões do container */
   font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
 }
 
 body {
   @apply bg-slate-50 text-slate-900;
-  height: 100%;
-  -webkit-user-select: none;
-  user-select: none;
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
+  /* overscroll-behavior: none evita o bounce branco no pull-to-refresh
+     sem bloquear o scroll interno dos componentes */
   overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .selectable {
@@ -40,6 +38,17 @@ body {
 ::-webkit-scrollbar-thumb:hover { @apply bg-slate-400; }
 
 /* ── Leaflet tema claro ──────────────────────────────────────── */
+/*
+  O Leaflet injeta seus tiles e controles fora da zona Angular.
+  Os overrides aqui garantem que o tema claro se aplique
+  independente de como o Leaflet for inicializado.
+*/
+.leaflet-container {
+  /* Garante que o container do mapa nunca colapse para 0px
+     mesmo que o pai tenha dimensões indefinidas */
+  font-family: inherit;
+}
+
 .leaflet-popup-content-wrapper {
   background: #ffffff !important;
   color: #0f172a !important;

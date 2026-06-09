@@ -187,6 +187,12 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
         const ultima = hist[hist.length - 1];
         this.atualizarMarcadorPos(ultima);
       }
+
+      // invalidateSize: força o Leaflet a recalcular as dimensões do
+      // container após o Angular terminar de renderizar o DOM.
+      // Sem isso, o mapa renderiza "cinza" quando o container não
+      // tinha tamanho definido no momento do L.map().
+      setTimeout(() => this.leafletMap?.invalidateSize(), 50);
     });
   }
 

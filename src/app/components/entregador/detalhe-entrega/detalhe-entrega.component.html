@@ -47,10 +47,13 @@
     <div class="flex-1 overflow-y-auto pb-4">
 
       <!-- ── MAPA DE PRÉVIA DA ROTA ───────────────────────────── -->
-      <div class="relative bg-slate-200 shadow-sm" style="height:240px;">
+      <!-- height explícito em px — Leaflet precisa de dimensões calculadas
+           antes da inicialização. h-full não funciona em cadeia flex sem
+           height definido em todos os ancestrais -->
+      <div class="relative bg-slate-200 shadow-sm" style="height:260px; min-height:260px;">
 
-        <!-- Container do mapa -->
-        <div #mapContainer class="w-full h-full"></div>
+        <!-- Container do mapa: altura explícita garante render correto -->
+        <div #mapContainer class="w-full" style="height:260px;"></div>
 
         <!-- Loading do mapa -->
         @if (!mapPronto()) {

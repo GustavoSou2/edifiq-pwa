@@ -250,6 +250,15 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
       );
       this.leafletMap!.fitBounds(bounds, { padding: [50, 50] });
 
+      // invalidateSize: reconstrói o cálculo de dimensões do container.
+      // Necessário porque o mapa é criado dentro de um componente Angular
+      // que pode ainda estar ajustando layout quando o Leaflet inicializa.
+      setTimeout(() => {
+        this.leafletMap?.invalidateSize();
+        // Refaz o fitBounds após o resize para garantir enquadramento correto
+        this.leafletMap?.fitBounds(bounds, { padding: [50, 50] });
+      }, 100);
+
       this.ngZone.run(() => this.mapPronto.set(true));
     });
   }
