@@ -10,8 +10,6 @@ import { ref, onValue, DatabaseReference, off } from 'firebase/database';
 import { firebaseDB } from '../firebase.config';
 import { Coordenada } from './rastreamento.service';
 
-const DB_PATH = 'tracking/motorista_001';
-
 // Máximo de pontos no histórico de percurso (evita memória ilimitada)
 const MAX_HISTORICO = 500;
 
@@ -25,9 +23,11 @@ export class MonitoramentoService {
    * Observable que emite a coordenada atual a cada mudança no Firebase.
    * Internamente acumula o histórico para expor via getHistorico().
    */
-  escutarCoordenadas(): Observable<Coordenada | null> {
+  escutarCoordenadas(deliveryId: string): Observable<Coordenada | null> {
+    this.limparHistorico();
     return new Observable<Coordenada | null>((observer) => {
-      const dbRef: DatabaseReference = ref(firebaseDB, DB_PATH);
+      const dbPath = `tracking/delivery_${deliveryId}`;
+      const dbRef: DatabaseReference = ref(firebaseDB, dbPath);
 
       const unsubscribe = onValue(
         dbRef,

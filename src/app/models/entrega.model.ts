@@ -1,7 +1,6 @@
 // ============================================================
 // entrega.model.ts
-// Espelha o contrato CreateOrderRequest / CreateOrderItemRequest
-// da API Java — pronto para substituir o mock por HTTP call.
+// Espelha o contrato DeliveryDetailResponse da API Java.
 // ============================================================
 
 export type StatusEntrega = 'pendente' | 'em_rota' | 'entregue' | 'problema';
@@ -9,50 +8,61 @@ export type StatusEntrega = 'pendente' | 'em_rota' | 'entregue' | 'problema';
 export interface ItemEntrega {
   id: string;
   categoryId?: string;
-  description: string;      // CreateOrderItemRequest.description
-  unit: string;             // ex: "saco", "cx", "m²"
-  quantity: number;         // CreateOrderItemRequest.quantity (BigDecimal)
+  description: string;
+  unit: string;
+  quantity: number;
   notes?: string;
   sortOrder?: number;
   // checklist de finalização
   conferido: boolean;
 }
 
-export interface EnderecoEntrega {
-  logradouro: string;
-  numero: string;
-  bairro: string;
-  cidade: string;
-  uf: string;
-  lat: number;
-  lng: number;
-}
-
 export interface Entrega {
   id: string;
-  referenceCode: string;       // CreateOrderRequest.referenceCode
-  title: string;               // CreateOrderRequest.title
-  cliente: string;
-  isUrgent: boolean;           // CreateOrderRequest.isUrgent
-  notes?: string;              // CreateOrderRequest.notes
+  referenceCode: string;
+  title: string;
+  isUrgent: boolean;
+  notes?: string;
   status: StatusEntrega;
 
-  // Endereços
-  origem: EnderecoEntrega;
-  destino: EnderecoEntrega;    // deliveryAddress / deliveryCity / deliveryState / lat / lng
+  // ── Endereço de destino ──────────────────────────────────
+  deliveryAddress: string;
+  deliveryCity: string;
+  deliveryState: string;
+  deliveryLat: number;
+  deliveryLng: number;
 
-  // Janela de entrega — CreateOrderRequest.deliveryWindowStart / End
-  deliveryWindowStart: string; // ISO string
-  deliveryWindowEnd: string;
+  // ── Fornecedor (origem) ──────────────────────────────────
+  supplierName: string;
+  supplierCity: string;
+  supplierState: string;
+  supplierLat: number;
+  supplierLng: number;
+  supplierReputationScore?: number;
 
-  // Métricas calculadas no frontend
+  // ── Proposta aceita ──────────────────────────────────────
+  proposalTotalPrice?: number;
+  proposalDeliveryEtaHours?: number;
+  proposalProposedDeliveryAt?: string; // ISO
+  proposalMessage?: string;
+
+  // ── Janela de entrega (da ordem) ─────────────────────────
+  deliveryWindowStart: string; // ISO
+  deliveryWindowEnd?: string;  // ISO — opcional
+
+  // ── Datas da entrega ─────────────────────────────────────
+  scheduledAt?: string;
+  dispatchedAt?: string;
+  deliveredAt?: string;
+
+  // ── Métricas calculadas ───────────────────────────────────
   distanciaKm: number;
   tempoEstimadoMin: number;
 
-  // Itens da ordem
+  // ── Itens da ordem ────────────────────────────────────────
   items: ItemEntrega[];
 
-  // Finalização
-  fotoEntregaBase64?: string;
-  observacaoFinalizacao?: string;
+  // ── Finalização ───────────────────────────────────────────
+  proofUrl?: string;
+  trackingCode?: string;
 }

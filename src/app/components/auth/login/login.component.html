@@ -1,0 +1,110 @@
+<!-- login.component.html -->
+<div class="min-h-screen flex items-center justify-center relative overflow-hidden px-4"
+     style="background: radial-gradient(circle at 10% 20%, rgb(240, 253, 244) 0%, rgb(244, 244, 245) 90%);">
+
+  <!-- Decoração de fundo com gradientes circulares desfocados -->
+  <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-green-200 opacity-40 blur-3xl animate-pulse" style="animation-duration: 8s;"></div>
+  <div class="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-emerald-100 opacity-60 blur-3xl animate-pulse" style="animation-duration: 12s;"></div>
+
+  <div class="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/60 relative z-10 transition-all duration-300">
+    <!-- Logotipo / Header -->
+    <div class="flex flex-col items-center mb-8">
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 text-3xl shadow-lg shadow-green-100 border border-green-200"
+           style="background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);">
+        🏗️
+      </div>
+      <h2 class="text-3xl font-black tracking-tight text-neutral-900">EdifIQ</h2>
+      <p class="text-sm font-medium text-neutral-500 mt-1">Plataforma de Entregas & Rastreamento</p>
+    </div>
+
+    <!-- Mensagem de erro -->
+    @if (errorMessage()) {
+      <div class="mb-5 p-4 rounded-2xl flex items-start gap-3 bg-red-50 border border-red-100 text-red-600 animate-fade-in">
+        <svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+        </svg>
+        <span class="text-xs font-semibold leading-relaxed">{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <!-- Formulário -->
+    <form (ngSubmit)="onSubmit()" class="space-y-5">
+      @if (!showTenantSelector()) {
+        <!-- Campo: Email -->
+        <div class="space-y-1.5">
+          <label for="email" class="text-xs font-black tracking-wider uppercase text-neutral-400">E-mail</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-neutral-400">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 10-2.636 6.364M16.5 12V8.25"/>
+              </svg>
+            </span>
+            <input type="email" id="email" name="email" [(ngModel)]="email" required
+                   placeholder="seu.email@exemplo.com"
+                   class="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-neutral-200 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm transition-all duration-200" />
+          </div>
+        </div>
+
+        <!-- Campo: Senha -->
+        <div class="space-y-1.5">
+          <label for="password" class="text-xs font-black tracking-wider uppercase text-neutral-400">Senha</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-neutral-400">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+              </svg>
+            </span>
+            <input type="password" id="password" name="password" [(ngModel)]="password" required
+                   placeholder="••••••••"
+                   class="w-full pl-11 pr-4 py-3.5 rounded-2xl border border-neutral-200 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm transition-all duration-200" />
+          </div>
+        </div>
+      } @else {
+        <!-- Seletor de Tenant (Inquilino) -->
+        <div class="space-y-4 animate-fade-in">
+          <div class="p-4 rounded-2xl bg-green-50 border border-green-100 flex items-center gap-3">
+            <span class="text-xl">🏢</span>
+            <div>
+              <p class="text-xs font-bold text-green-700">Múltiplas organizações encontradas</p>
+              <p class="text-[10px] text-green-600 mt-0.5">Selecione em qual empresa deseja entrar:</p>
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="tenant" class="text-xs font-black tracking-wider uppercase text-neutral-400">Organização</label>
+            <div class="relative">
+              <select id="tenant" name="selectedTenantSlug" [(ngModel)]="selectedTenantSlug"
+                      class="w-full px-4 py-3.5 rounded-2xl border border-neutral-200 bg-white/50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm appearance-none transition-all duration-200">
+                @for (tenant of tenants(); track tenant.slug) {
+                  <option [value]="tenant.slug">{{ tenant.name }}</option>
+                }
+              </select>
+              <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-neutral-400 pointer-events-none">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+                </svg>
+              </span>
+            </div>
+          </div>
+
+          <button type="button" (click)="resetTenantSelector()"
+                  class="w-full text-center text-xs font-bold text-neutral-500 hover:text-neutral-700 transition-colors py-2">
+            ← Voltar para e-mail/senha
+          </button>
+        </div>
+      }
+
+      <!-- Botão de Ação -->
+      <button type="submit" [disabled]="isLoading()"
+              class="w-full flex items-center justify-center gap-2 py-4 rounded-2xl text-sm font-bold text-white transition-all shadow-lg active:scale-[0.985] disabled:opacity-75 disabled:pointer-events-none"
+              style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);">
+        @if (isLoading()) {
+          <div class="w-4 h-4 border-2 rounded-full animate-spin border-white/30 border-top-white"></div>
+          Entrando...
+        } @else {
+          Entrar na Conta
+        }
+      </button>
+    </form>
+  </div>
+</div>

@@ -11,6 +11,8 @@ import {
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideServiceWorker } from '@angular/service-worker';
 
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { authInterceptor } from './services/auth.interceptor';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -21,6 +23,7 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withViewTransitions(),
     ),
+    provideHttpClient(withInterceptors([authInterceptor]), withFetch()),
     provideClientHydration(withEventReplay()),
 
     // Service Worker: ativo apenas em produção (ng build --configuration production)

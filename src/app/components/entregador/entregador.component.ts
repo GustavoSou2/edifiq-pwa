@@ -120,7 +120,7 @@ export class EntregadorComponent implements OnDestroy {
 
   async iniciarEntrega(): Promise<void> {
     this.ativo.set(true);
-    await this.rastreamento.iniciarRastreamento();
+    await this.rastreamento.iniciarRastreamento('motorista_001');
   }
 
   pararEntrega(): void {

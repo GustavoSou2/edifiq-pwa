@@ -7,8 +7,7 @@
   <div class="px-5 pt-6 pb-5" style="background:#ffffff;border-bottom:1px solid #e5e5e5;">
     <div class="flex items-center justify-between mb-1">
       <p class="text-xs font-semibold tracking-widest uppercase" style="color:#a3a3a3;">{{ dataHoje }}</p>
-      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold"
-           [style]="isOnline()
+      <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold" [style]="isOnline()
              ? 'background:#dcfce7;color:#16a34a;border:1px solid #bbf7d0'
              : 'background:#fee2e2;color:#dc2626;border:1px solid #fecaca'">
         <span class="w-1.5 h-1.5 rounded-full"
@@ -16,9 +15,19 @@
         {{ isOnline() ? 'Online' : 'Offline' }}
       </div>
     </div>
-    <h1 class="text-2xl font-black tracking-tight mt-0.5" style="color:#0a0a0a;letter-spacing:-0.5px;">
-      Minhas Entregas
-    </h1>
+    <div class="flex items-center justify-between mt-0.5">
+      <h1 class="text-2xl font-black tracking-tight" style="color:#0a0a0a;letter-spacing:-0.5px;">
+        Minhas Entregas
+      </h1>
+      <button (click)="logout()"
+        class="p-2 rounded-xl text-neutral-400 hover:text-red-500 hover:bg-red-50 transition-all active:scale-95"
+        title="Sair">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+        </svg>
+      </button>
+    </div>
 
     <!-- Progresso -->
     <div class="mt-4 p-4 rounded-2xl" style="background:#f9f9f9;border:1px solid #e5e5e5;">
@@ -30,58 +39,61 @@
       </div>
       <div class="h-1.5 rounded-full overflow-hidden" style="background:#e5e5e5;">
         <div class="h-full rounded-full transition-all duration-700" style="background:#16a34a;"
-             [style.width.%]="progresso()"></div>
+          [style.width.%]="progresso()"></div>
       </div>
       <div class="grid grid-cols-4 gap-2 mt-4">
         @for (item of [
-          {v: resumo().total,     l:'Total',    c:'#0a0a0a'},
-          {v: resumo().pendentes, l:'Pendente', c:'#d97706'},
-          {v: resumo().entregues, l:'Feito',    c:'#16a34a'},
-          {v: resumo().problemas, l:'Prob.',    c:'#dc2626'}
+        {v: resumo().total, l:'Total', c:'#0a0a0a'},
+        {v: resumo().pendentes, l:'Pendente', c:'#d97706'},
+        {v: resumo().entregues, l:'Feito', c:'#16a34a'},
+        {v: resumo().problemas, l:'Prob.', c:'#dc2626'}
         ]; track item.l) {
-          <div class="text-center">
-            <p class="text-xl font-black leading-none" [style.color]="item.c">{{ item.v }}</p>
-            <p class="text-[10px] font-semibold mt-1 tracking-wider uppercase" style="color:#a3a3a3;">{{ item.l }}</p>
-          </div>
+        <div class="text-center">
+          <p class="text-xl font-black leading-none" [style.color]="item.c">{{ item.v }}</p>
+          <p class="text-[10px] font-semibold mt-1 tracking-wider uppercase" style="color:#a3a3a3;">{{ item.l }}</p>
+        </div>
         }
       </div>
     </div>
 
     <!-- Notificações -->
     @if (permissaoNotif() === 'pendente') {
-      <button (click)="solicitarNotificacoes()" [disabled]="solicitandoPermissao()"
-        class="w-full mt-3 flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all active:scale-[0.98]"
-        style="background:#f0fdf4;border:1px solid #bbf7d0;">
-        <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-             style="background:#dcfce7;border:1px solid #bbf7d0;">
-          @if (solicitandoPermissao()) {
-            <div class="w-3.5 h-3.5 border-2 rounded-full animate-spin"
-                 style="border-color:#bbf7d0;border-top-color:#16a34a;"></div>
-          } @else {
-            <svg class="w-3.5 h-3.5" style="color:#16a34a;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"/>
-            </svg>
-          }
-        </div>
-        <div class="flex-1">
-          <p class="text-xs font-bold" style="color:#16a34a;">Ativar notificações push</p>
-          <p class="text-[11px] mt-0.5" style="color:#737373;">Receba novas entregas mesmo com o app fechado</p>
-        </div>
-        <svg class="w-4 h-4 shrink-0" style="color:#a3a3a3;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+    <button (click)="solicitarNotificacoes()" [disabled]="solicitandoPermissao()"
+      class="w-full mt-3 flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all active:scale-[0.98]"
+      style="background:#f0fdf4;border:1px solid #bbf7d0;">
+      <div class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+        style="background:#dcfce7;border:1px solid #bbf7d0;">
+        @if (solicitandoPermissao()) {
+        <div class="w-3.5 h-3.5 border-2 rounded-full animate-spin"
+          style="border-color:#bbf7d0;border-top-color:#16a34a;"></div>
+        } @else {
+        <svg class="w-3.5 h-3.5" style="color:#16a34a;" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
         </svg>
-      </button>
+        }
+      </div>
+      <div class="flex-1">
+        <p class="text-xs font-bold" style="color:#16a34a;">Ativar notificações push</p>
+        <p class="text-[11px] mt-0.5" style="color:#737373;">Receba novas entregas mesmo com o app fechado</p>
+      </div>
+      <svg class="w-4 h-4 shrink-0" style="color:#a3a3a3;" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+        stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+      </svg>
+    </button>
     }
     @if (permissaoNotif() === 'concedida') {
-      <div class="flex items-center gap-2 mt-3">
-        <span class="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span>
-        <span class="text-[11px] font-semibold" style="color:#737373;">Notificações ativas</span>
-      </div>
+    <div class="flex items-center gap-2 mt-3">
+      <span class="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span>
+      <span class="text-[11px] font-semibold" style="color:#737373;">Notificações ativas</span>
+    </div>
     }
     @if (permissaoNotif() === 'negada') {
-      <div class="flex items-center gap-2 mt-3">
-        <span class="text-[11px]" style="color:#a3a3a3;">🔕 Notificações bloqueadas nas configurações do browser</span>
-      </div>
+    <div class="flex items-center gap-2 mt-3">
+      <span class="text-[11px]" style="color:#a3a3a3;">🔕 Notificações bloqueadas nas configurações do browser</span>
+    </div>
     }
   </div>
 
@@ -89,99 +101,101 @@
   <div class="px-4 pt-4 space-y-2.5 pb-8">
 
     @if (!isOnline()) {
-      <div class="flex items-center gap-3 px-4 py-3 rounded-xl"
-           style="background:#fffbeb;border:1px solid #fde68a;">
-        <span class="text-base">📶</span>
-        <p class="text-xs font-semibold" style="color:#d97706;">Sem conexão — dados podem estar desatualizados</p>
-      </div>
+    <div class="flex items-center gap-3 px-4 py-3 rounded-xl" style="background:#fffbeb;border:1px solid #fde68a;">
+      <span class="text-base">📶</span>
+      <p class="text-xs font-semibold" style="color:#d97706;">Sem conexão — dados podem estar desatualizados</p>
+    </div>
     }
 
     @for (e of entregas.entregas(); track e.id) {
-      <button (click)="abrirEntrega(e)"
-        class="w-full text-left rounded-2xl overflow-hidden transition-all duration-150 active:scale-[0.985]"
-        style="background:#ffffff;border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+    <button (click)="abrirEntrega(e)"
+      class="w-full text-left rounded-2xl overflow-hidden transition-all duration-150 active:scale-[0.985]"
+      style="background:#ffffff;border:1px solid #e5e5e5;box-shadow:0 1px 4px rgba(0,0,0,0.04);">
 
-        <div class="flex">
-          <!-- Borda lateral de status -->
-          <div class="w-[3px] shrink-0 rounded-l-2xl"
-               [style.background]="e.status==='pendente'?'#d97706':e.status==='em_rota'?'#2563eb':e.status==='entregue'?'#16a34a':'#dc2626'">
-          </div>
+      <div class="flex">
+        <!-- Borda lateral de status -->
+        <div class="w-[3px] shrink-0 rounded-l-2xl"
+          [style.background]="e.status==='pendente'?'#d97706':e.status==='em_rota'?'#2563eb':e.status==='entregue'?'#16a34a':'#dc2626'">
+        </div>
 
-          <div class="flex-1 p-4">
-            <!-- Linha 1 -->
-            <div class="flex items-center justify-between gap-2 mb-2.5">
-              <div class="flex items-center gap-2">
-                @if (e.isUrgent) {
-                  <span class="text-[10px] font-black px-2 py-0.5 rounded-full tracking-wide"
-                        style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;">⚡ URGENTE</span>
-                }
-                <span class="text-[11px] font-mono font-semibold" style="color:#a3a3a3;">{{ e.referenceCode }}</span>
-              </div>
-              <span class="text-[10px] font-black px-2.5 py-1 rounded-full"
-                [style]="e.status==='pendente'?'background:#fef3c7;color:#d97706':
+        <div class="flex-1 p-4">
+          <!-- Linha 1 -->
+          <div class="flex items-center justify-between gap-2 mb-2.5">
+            <div class="flex items-center gap-2">
+              @if (e.isUrgent) {
+              <span class="text-[10px] font-black px-2 py-0.5 rounded-full tracking-wide"
+                style="background:#fee2e2;color:#dc2626;border:1px solid #fecaca;">⚡ URGENTE</span>
+              }
+              <span class="text-[11px] font-mono font-semibold" style="color:#a3a3a3;">{{ e.referenceCode }}</span>
+            </div>
+            <span class="text-[10px] font-black px-2.5 py-1 rounded-full" [style]="e.status==='pendente'?'background:#fef3c7;color:#d97706':
                          e.status==='em_rota'  ?'background:#dbeafe;color:#2563eb':
                          e.status==='entregue' ?'background:#dcfce7;color:#16a34a':
                                                 'background:#fee2e2;color:#dc2626'">
-                {{ labelStatus(e.status) }}
-              </span>
-            </div>
-
-            <!-- Cliente -->
-            <p class="text-sm font-bold leading-tight" style="color:#0a0a0a;">{{ e.cliente }}</p>
-            <p class="text-xs mt-0.5" style="color:#737373;">{{ e.title }}</p>
-
-            <!-- Destino -->
-            <div class="flex items-center gap-2 mt-3">
-              <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                   style="background:#f0fdf4;border:1px solid #bbf7d0;">
-                <svg class="w-2.5 h-2.5" style="color:#16a34a;" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                </svg>
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-xs font-semibold truncate" style="color:#404040;">
-                  {{ e.destino.logradouro }}, {{ e.destino.numero }}
-                </p>
-                <p class="text-[11px]" style="color:#a3a3a3;">{{ e.destino.bairro }} · {{ e.destino.cidade }}/{{ e.destino.uf }}</p>
-              </div>
-            </div>
-
-            <!-- Footer chips -->
-            <div class="flex items-center gap-1.5 mt-3 flex-wrap">
-              <span class="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg"
-                    style="background:#f9f9f9;border:1px solid #e5e5e5;color:#737373;">
-                <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                {{ formatarJanela(e) }}
-              </span>
-              <span class="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg"
-                    style="background:#f9f9f9;border:1px solid #e5e5e5;color:#737373;">
-                {{ e.distanciaKm }}km · ~{{ e.tempoEstimadoMin }}min
-              </span>
-              <span class="ml-auto text-[11px] font-black px-2.5 py-1 rounded-lg"
-                    style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">
-                {{ e.items.length }} itens
-              </span>
-            </div>
-
-            @if (e.notes && e.status === 'problema') {
-              <div class="mt-2.5 flex items-center gap-2 px-3 py-2 rounded-xl"
-                   style="background:#fef2f2;border:1px solid #fecaca;">
-                <span class="text-xs">⚠️</span>
-                <p class="text-[11px] font-semibold" style="color:#dc2626;">{{ e.notes }}</p>
-              </div>
-            }
+              {{ labelStatus(e.status) }}
+            </span>
           </div>
 
-          <!-- Chevron -->
-          <div class="flex items-center pr-4">
-            <svg class="w-4 h-4" style="color:#d4d4d4;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
-            </svg>
+          <!-- Cliente -->
+          <p class="text-sm font-bold leading-tight" style="color:#0a0a0a;">{{ e.supplierName }}</p>
+          <p class="text-xs mt-0.5" style="color:#737373;">{{ e.title }}</p>
+
+          <!-- Destino -->
+          <div class="flex items-center gap-2 mt-3">
+            <div class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+              style="background:#f0fdf4;border:1px solid #bbf7d0;">
+              <svg class="w-2.5 h-2.5" style="color:#16a34a;" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                  clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-semibold truncate" style="color:#404040;">
+                {{ e.deliveryAddress }}
+              </p>
+              <p class="text-[11px]" style="color:#a3a3a3;">{{ e.deliveryCity }}/{{ e.deliveryState }}</p>
+            </div>
           </div>
+
+          <!-- Footer chips -->
+          <div class="flex items-center gap-1.5 mt-3 flex-wrap">
+            <span class="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg"
+              style="background:#f9f9f9;border:1px solid #e5e5e5;color:#737373;">
+              <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {{ formatarJanela(e) }}
+            </span>
+            <span class="flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg"
+              style="background:#f9f9f9;border:1px solid #e5e5e5;color:#737373;">
+              {{ e.distanciaKm }}km · ~{{ e.tempoEstimadoMin }}min
+            </span>
+            <span class="ml-auto text-[11px] font-black px-2.5 py-1 rounded-lg"
+              style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">
+              {{ e.items.length }} itens
+            </span>
+          </div>
+
+          @if (e.notes && e.status === 'problema') {
+          <div class="mt-2.5 flex items-center gap-2 px-3 py-2 rounded-xl"
+            style="background:#fef2f2;border:1px solid #fecaca;">
+            <span class="text-xs">⚠️</span>
+            <p class="text-[11px] font-semibold" style="color:#dc2626;">{{ e.notes }}</p>
+          </div>
+          }
         </div>
-      </button>
+
+        <!-- Chevron -->
+        <div class="flex items-center pr-4">
+          <svg class="w-4 h-4" style="color:#d4d4d4;" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </div>
+      </div>
+    </button>
     }
 
   </div>

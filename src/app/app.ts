@@ -29,7 +29,7 @@ export class App {
 
   /**
    * Mostra a navegação lateral/bottom apenas no painel do gestor.
-   * Na tela do entregador o app ocupa 100% sem nenhum chrome extra.
+   * Na tela do entregador ou na tela de login o app ocupa 100% sem nenhum chrome extra.
    */
-  readonly mostrarNav = computed(() => !this.url().startsWith('/entregador'));
+  readonly mostrarNav = computed(() => !this.url().startsWith('/entregador') && !this.url().startsWith('/login'));
 }

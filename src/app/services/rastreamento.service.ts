@@ -28,7 +28,6 @@ export interface Coordenada {
 export type StatusEnvio = 'inativo' | 'capturando' | 'enviando' | 'sincronizando' | 'erro';
 
 // ── Constantes de negócio ────────────────────────────────────
-const DB_PATH            = 'tracking/motorista_001';
 const DISTANCIA_MIN_M    = 10;        // metros mínimos para novo envio
 const INTERVALO_MIN_MS   = 30_000;    // 30 s de keep-alive mesmo parado
 const OFFLINE_QUEUE_KEY  = 'edifiq_offline_queue';
@@ -43,11 +42,17 @@ export class RastreamentoService implements OnDestroy {
   readonly totalEnviados$ = new BehaviorSubject<number>(0);
 
   // ── Estado interno ───────────────────────────────────────────
+  private currentDeliveryId: string | null = null;
   private watchId: number | null = null;
   private ultimaEnviada: Coordenada | null = null;
   private ultimoEnvioTs = 0;
   private wakeLock: WakeLockSentinel | null = null;
   private onlineHandler = () => this.sincronizarFila();
+
+  private getDbPath(): string {
+    const id = this.currentDeliveryId || 'motorista_001';
+    return `tracking/delivery_${id}`;
+  }
 
   constructor(
     private ngZone: NgZone,
@@ -69,8 +74,9 @@ export class RastreamentoService implements OnDestroy {
   // ── API pública ──────────────────────────────────────────────
 
   /** Inicia GPS + Wake Lock */
-  async iniciarRastreamento(): Promise<void> {
+  async iniciarRastreamento(deliveryId: string): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) return;
+    this.currentDeliveryId = deliveryId;
 
     if (!navigator.geolocation) {
       this.emitirErro('Geolocalização não suportada neste dispositivo.');
@@ -109,6 +115,7 @@ export class RastreamentoService implements OnDestroy {
     this.statusEnvio$.next('inativo');
     this.ultimaEnviada = null;
     this.ultimoEnvioTs = 0;
+    this.currentDeliveryId = null;
   }
 
   // ── GPS callbacks ────────────────────────────────────────────
@@ -161,7 +168,7 @@ export class RastreamentoService implements OnDestroy {
     }
 
     try {
-      await set(ref(firebaseDB, DB_PATH), {
+      await set(ref(firebaseDB, this.getDbPath()), {
         lat:       coord.lat,
         lng:       coord.lng,
         timestamp: coord.timestamp,
@@ -231,7 +238,7 @@ export class RastreamentoService implements OnDestroy {
     const ultima = fila[fila.length - 1];
 
     try {
-      await set(ref(firebaseDB, DB_PATH), {
+      await set(ref(firebaseDB, this.getDbPath()), {
         lat:       ultima.lat,
         lng:       ultima.lng,
         timestamp: ultima.timestamp,

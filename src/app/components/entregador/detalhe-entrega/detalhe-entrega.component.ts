@@ -12,7 +12,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntregasService } from '../../../services/entregas.service';
-import { RastreamentoService, StatusEnvio } from '../../../services/rastreamento.service';
+import { RastreamentoService, StatusEnvio, Coordenada } from '../../../services/rastreamento.service';
 import { Entrega } from '../../../models/entrega.model';
 import { CountConferidosPipe } from '../../../pipes/count-conferidos.pipe';
 
@@ -36,14 +36,15 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
   readonly fotoInput = viewChild<ElementRef<HTMLInputElement>>('fotoInput');
 
   // ── Signals ──────────────────────────────────────────────────
-  readonly abaAtiva      = signal<Aba>('rota');
+  readonly abaAtiva        = signal<Aba>('rota');
   readonly rastreandoAtivo = signal(false);
-  readonly statusEnvio   = signal<StatusEnvio>('inativo');
-  readonly erroMsg       = signal('');
-  readonly totalEnviados = signal(0);
-  readonly mapPronto     = signal(false);
-  readonly obsFinalizacao = signal('');
-  readonly fotoPreview   = signal<string | null>(null);
+  readonly statusEnvio     = signal<StatusEnvio>('inativo');
+  readonly erroMsg         = signal('');
+  readonly totalEnviados   = signal(0);
+  readonly posicaoAtual    = signal<Coordenada | null>(null);
+  readonly mapPronto       = signal(false);
+  readonly obsFinalizacao  = signal('');
+  readonly fotoPreview     = signal<string | null>(null);
   readonly enviandoFinaliz = signal(false);
 
   // ── Computed ─────────────────────────────────────────────────
@@ -66,15 +67,40 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
     this.todosConferidos() && !!this.fotoPreview(),
   );
 
+  /** Janela de entrega formatada */
   readonly janela = computed(() => {
     const e = this.entrega();
     if (!e) return '';
     const fmt = (iso: string) =>
-      new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    return `${fmt(e.deliveryWindowStart)} – ${fmt(e.deliveryWindowEnd)}`;
+      new Date(iso).toLocaleString('pt-BR', {
+        day: '2-digit', month: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+      });
+    const inicio = fmt(e.deliveryWindowStart);
+    if (e.deliveryWindowEnd) {
+      const fim = fmt(e.deliveryWindowEnd);
+      return `${inicio} → ${fim}`;
+    }
+    return `A partir de ${inicio}`;
+  });
+
+  /** Valor da proposta formatado em BRL */
+  readonly valorProposta = computed(() => {
+    const e = this.entrega();
+    if (!e?.proposalTotalPrice) return null;
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+      .format(e.proposalTotalPrice);
+  });
+
+  /** Reputação do fornecedor formatada */
+  readonly estrelasFornecedor = computed(() => {
+    const e = this.entrega();
+    if (!e?.supplierReputationScore) return null;
+    return e.supplierReputationScore.toFixed(1);
   });
 
   private leafletMap: LeafletMap | null = null;
+  private driverMarker: any = null;
 
   constructor(
     private svc: EntregasService,
@@ -83,6 +109,9 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
     private ngZone: NgZone,
     @Inject(PLATFORM_ID) private platformId: object,
   ) {
+    if (this.svc.entregas().length === 0) {
+      this.svc.carregarEntregas();
+    }
     this.rastreamento.statusEnvio$
       .pipe(takeUntilDestroyed())
       .subscribe((s) => this.statusEnvio.set(s));
@@ -92,13 +121,17 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
     this.rastreamento.totalEnviados$
       .pipe(takeUntilDestroyed())
       .subscribe((n) => this.totalEnviados.set(n));
+    // Posição em tempo real para atualizar o marcador no mapa
+    this.rastreamento.coordenada$
+      .pipe(takeUntilDestroyed())
+      .subscribe((c) => {
+        this.posicaoAtual.set(c);
+        if (c) this.atualizarMarcadorDriver(c);
+      });
   }
 
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      // Usa requestAnimationFrame + setTimeout para garantir que o
-      // @if (entrega(); as e) já renderizou o #mapContainer no DOM
-      // antes de tentar inicializar o Leaflet
       requestAnimationFrame(() => {
         setTimeout(() => this.inicializarMapa(), 50);
       });
@@ -120,7 +153,7 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
     if (!e) return;
     this.svc.atualizarStatus(e.id, 'em_rota');
     this.rastreandoAtivo.set(true);
-    await this.rastreamento.iniciarRastreamento();
+    await this.rastreamento.iniciarRastreamento(e.id);
   }
 
   conferirItem(itemId: string, conferido: boolean): void {
@@ -153,11 +186,10 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
     if (!e || !this.podeFinalizarChecklist()) return;
 
     this.enviandoFinaliz.set(true);
-    // Simula envio à API (em produção: HTTP call)
+    this.svc.salvarFinalizacao(e.id, this.fotoPreview()!, this.obsFinalizacao());
+    this.rastreamento.pararRastreamento();
+    this.rastreandoAtivo.set(false);
     setTimeout(() => {
-      this.svc.salvarFinalizacao(e.id, this.fotoPreview()!, this.obsFinalizacao());
-      this.rastreamento.pararRastreamento();
-      this.rastreandoAtivo.set(false);
       this.enviandoFinaliz.set(false);
       this.router.navigate(['/entregador']);
     }, 800);
@@ -175,7 +207,7 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
   abrirNavegacao(): void {
     const e = this.entrega();
     if (!e || !isPlatformBrowser(this.platformId)) return;
-    const { lat, lng } = e.destino;
+    const { deliveryLat: lat, deliveryLng: lng } = e;
     window.open(
       `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`,
       '_blank',
@@ -190,9 +222,6 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
 
     const L = await import('leaflet');
 
-    // Fix obrigatório para ícones do Leaflet com bundlers (webpack/esbuild).
-    // O Leaflet tenta resolver imagens via _getIconUrl que usa require(),
-    // o que falha em ESM. A solução é reescrever os paths manualmente.
     type LeafletIconDefault = typeof L.Icon.Default & {
       prototype: { _getIconUrl?: () => string };
     };
@@ -204,23 +233,24 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
     });
 
     this.ngZone.runOutsideAngular(() => {
-      const { origem, destino } = entrega;
+      const origemLat = entrega.supplierLat;
+      const origemLng = entrega.supplierLng;
+      const destinoLat = entrega.deliveryLat;
+      const destinoLng = entrega.deliveryLng;
 
       this.leafletMap = L.map(el, {
-        center: [(origem.lat + destino.lat) / 2, (origem.lng + destino.lng) / 2],
+        center: [(origemLat + destinoLat) / 2, (origemLng + destinoLng) / 2],
         zoom: 14, zoomControl: false,
       });
 
       L.control.zoom({ position: 'bottomright' }).addTo(this.leafletMap!);
 
-      // Tiles CartoDB Positron — minimalista claro
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '© <a href="https://carto.com">CARTO</a>',
         subdomains: 'abcd',
         maxZoom: 19,
       }).addTo(this.leafletMap!);
 
-      // Marcadores minimalistas — tema claro
       const pin = (accent: string) => L.divIcon({
         className: '',
         html: `<div style="
@@ -232,22 +262,21 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
         iconSize: [12, 12], iconAnchor: [6, 6],
       });
 
-      L.marker([origem.lat, origem.lng], { icon: pin('#16a34a') })
+      L.marker([origemLat, origemLng], { icon: pin('#16a34a') })
         .addTo(this.leafletMap!)
-        .bindPopup(`<strong style="color:#0a0a0a">Saída</strong><br><span style="color:#737373">${origem.logradouro}, ${origem.numero}</span>`);
+        .bindPopup(`<strong style="color:#0a0a0a">Saída</strong><br><span style="color:#737373">${entrega.supplierName}</span>`);
 
-      L.marker([destino.lat, destino.lng], { icon: pin('#0a0a0a') })
+      L.marker([destinoLat, destinoLng], { icon: pin('#0a0a0a') })
         .addTo(this.leafletMap!)
-        .bindPopup(`<strong style="color:#0a0a0a">Destino</strong><br><span style="color:#737373">${destino.logradouro}, ${destino.numero}</span>`);
+        .bindPopup(`<strong style="color:#0a0a0a">Destino</strong><br><span style="color:#737373">${entrega.deliveryAddress}</span>`);
 
       const pontos: [number, number][] = [
-        [origem.lat, origem.lng],
-        [origem.lat + (destino.lat - origem.lat) * 0.35, origem.lng + (destino.lng - origem.lng) * 0.1],
-        [origem.lat + (destino.lat - origem.lat) * 0.65, origem.lng + (destino.lng - origem.lng) * 0.9],
-        [destino.lat, destino.lng],
+        [origemLat, origemLng],
+        [origemLat + (destinoLat - origemLat) * 0.35, origemLng + (destinoLng - origemLng) * 0.1],
+        [origemLat + (destinoLat - origemLat) * 0.65, origemLng + (destinoLng - origemLng) * 0.9],
+        [destinoLat, destinoLng],
       ];
 
-      // Rota — sombra cinza + linha verde fina com traço
       L.polyline(pontos, {
         color: '#e5e5e5', weight: 7, opacity: 1,
         lineJoin: 'round', lineCap: 'round',
@@ -258,7 +287,7 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
         dashArray: '8 5',
       }).addTo(this.leafletMap!);
 
-      const bounds = L.latLngBounds([origem.lat, origem.lng], [destino.lat, destino.lng]);
+      const bounds = L.latLngBounds([origemLat, origemLng], [destinoLat, destinoLng]);
       this.leafletMap!.fitBounds(bounds, { padding: [50, 50] });
 
       setTimeout(() => {
@@ -267,6 +296,36 @@ export class DetalheEntregaComponent implements AfterViewInit, OnDestroy {
       }, 120);
 
       this.ngZone.run(() => this.mapPronto.set(true));
+    });
+  }
+
+  /** Atualiza (ou cria) o marcador do motorista no mapa em tempo real */
+  private atualizarMarcadorDriver(coordenada: Coordenada): void {
+    if (!this.leafletMap || !isPlatformBrowser(this.platformId)) return;
+
+    this.ngZone.runOutsideAngular(async () => {
+      const L = await import('leaflet');
+
+      const driverIcon = L.divIcon({
+        className: '',
+        html: `<div style="
+          width:14px;height:14px;border-radius:50%;
+          background:#2563eb;
+          border:3px solid #ffffff;
+          box-shadow:0 0 0 4px rgba(37,99,235,0.25);
+          animation:pulse 1.5s ease-in-out infinite;
+        "></div>`,
+        iconSize: [14, 14], iconAnchor: [7, 7],
+      });
+
+      if (this.driverMarker) {
+        this.driverMarker.setLatLng([coordenada.lat, coordenada.lng]);
+      } else {
+        this.driverMarker = (L as any)
+          .marker([coordenada.lat, coordenada.lng], { icon: driverIcon })
+          .addTo(this.leafletMap!)
+          .bindPopup('📍 Motorista');
+      }
     });
   }
 }

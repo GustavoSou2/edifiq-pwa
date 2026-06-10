@@ -1,7 +1,6 @@
 // ============================================================
 // painel.component.ts
-// Dashboard do Gestor — tema claro, mapa com percurso polyline.
-// Leaflet roda fora da zona Angular para evitar CD desnecessário.
+// Dashboard do Gestor — monitoramento dinâmico de entregas.
 // ============================================================
 
 import {
@@ -17,12 +16,15 @@ import {
   AfterViewInit,
   PLATFORM_ID,
   Inject,
-  DestroyRef,
   inject,
+  effect,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { MonitoramentoService } from '../../services/monitoramento.service';
+import { EntregasService } from '../../services/entregas.service';
+import { AuthService } from '../../services/auth.service';
 import { Coordenada } from '../../services/rastreamento.service';
 
 type LeafletMap    = import('leaflet').Map;
@@ -37,16 +39,27 @@ type LeafletPolyline = import('leaflet').Polyline;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
-
   readonly mapEl = viewChild<ElementRef<HTMLDivElement>>('mapContainer');
 
+  private readonly monitoramento = inject(MonitoramentoService);
+  readonly entregasService = inject(EntregasService);
+  private readonly authSvc = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly ngZone = inject(NgZone);
+
   // ── Signals ──────────────────────────────────────────────────
+  readonly selectedDeliveryId = signal<string>('');
   readonly coordenada    = signal<Coordenada | null>(null);
-  readonly carregando    = signal(true);
+  readonly carregando    = signal(false);
   readonly erroConexao   = signal('');
   readonly totalPontos   = signal(0);
 
   // ── Computed ─────────────────────────────────────────────────
+  readonly selectedDelivery = computed(() => {
+    const id = this.selectedDeliveryId();
+    return this.entregasService.entregas().find((e) => e.id === id) || null;
+  });
+
   readonly emTransito = computed(() => {
     const c = this.coordenada();
     if (!c) return false;
@@ -79,19 +92,75 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
   private leafletMap:    LeafletMap     | null = null;
   private marcador:      LeafletMarker  | null = null;
   private percursoLine:  LeafletPolyline | null = null;
+  private firebaseSub?:  Subscription;
 
-  private destroyRef = inject(DestroyRef);
+  constructor(@Inject(PLATFORM_ID) private platformId: object) {
+    // Carrega entregas ativas para o gestor
+    this.entregasService.carregarEntregas();
 
-  constructor(
-    private monitoramento: MonitoramentoService,
-    private ngZone: NgZone,
-    @Inject(PLATFORM_ID) private platformId: object,
-  ) {}
+    // Seleciona automaticamente a primeira entrega disponível após o carregamento
+    effect(() => {
+      const list = this.entregasService.entregas();
+      if (list.length > 0 && !this.selectedDeliveryId()) {
+        const emRota = list.find((e) => e.status === 'em_rota');
+        const defaultDel = emRota || list[0];
+        this.selecionarEntrega(defaultDel.id);
+      }
+    });
+  }
 
-  ngOnInit(): void {
-    this.monitoramento
-      .escutarCoordenadas()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+  ngOnInit(): void {}
+
+  ngAfterViewInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      requestAnimationFrame(() => {
+        setTimeout(() => this.inicializarMapa(), 50);
+      });
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.firebaseSub) {
+      this.firebaseSub.unsubscribe();
+    }
+    if (this.leafletMap) {
+      this.leafletMap.remove();
+      this.leafletMap = null;
+    }
+  }
+
+  // ── Monitoramento Dinâmico ───────────────────────────────────
+
+  selecionarEntrega(id: string): void {
+    if (!id || id === this.selectedDeliveryId()) return;
+
+    this.selectedDeliveryId.set(id);
+
+    // Limpa inscrições anteriores e reseta estado
+    if (this.firebaseSub) {
+      this.firebaseSub.unsubscribe();
+      this.firebaseSub = undefined;
+    }
+
+    this.coordenada.set(null);
+    this.erroConexao.set('');
+    this.totalPontos.set(0);
+    this.carregando.set(true);
+
+    // Reseta mapa fora da zona
+    this.ngZone.runOutsideAngular(() => {
+      if (this.percursoLine) {
+        this.percursoLine.setLatLngs([]);
+      }
+      if (this.marcador) {
+        this.marcador.setLatLng([-23.55052, -46.63331]);
+        this.marcador.setPopupContent('Aguardando posição...');
+      }
+    });
+
+    // Inicia escuta no Firebase
+    this.firebaseSub = this.monitoramento
+      .escutarCoordenadas(id)
       .subscribe({
         next: (coord) => {
           this.ngZone.run(() => {
@@ -101,7 +170,6 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
           });
 
           if (coord) {
-            // Mapa fora da zona — sem CD extra
             this.ngZone.runOutsideAngular(() => {
               this.atualizarMapa(coord);
             });
@@ -116,19 +184,9 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
-  ngAfterViewInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      requestAnimationFrame(() => {
-        setTimeout(() => this.inicializarMapa(), 50);
-      });
-    }
-  }
-
-  ngOnDestroy(): void {
-    if (this.leafletMap) {
-      this.leafletMap.remove();
-      this.leafletMap = null;
-    }
+  logout(): void {
+    this.authSvc.logout();
+    this.router.navigate(['/login']);
   }
 
   // ── Leaflet ──────────────────────────────────────────────────
@@ -139,7 +197,7 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const L = await import('leaflet');
 
-    // Fix obrigatório para ícones do Leaflet com bundlers (webpack/esbuild)
+    // Fix de ícones do Leaflet
     type LeafletIconDefault = typeof L.Icon.Default & {
       prototype: { _getIconUrl?: () => string };
     };
@@ -157,14 +215,12 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
         zoomControl: true,
       });
 
-      // Tiles CartoDB Positron — minimalista claro, sem poluição visual
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '© <a href="https://carto.com">CARTO</a>',
         subdomains: 'abcd',
         maxZoom: 19,
       }).addTo(this.leafletMap!);
 
-      // Ícone do caminhão — ponto verde claro
       const icone = L.divIcon({
         className: '',
         html: `<div style="
@@ -181,7 +237,6 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
         .addTo(this.leafletMap!)
         .bindPopup('Aguardando posição...');
 
-      // Polyline do percurso — verde EdifIQ
       this.percursoLine = L.polyline([], {
         color: '#16a34a',
         weight: 3,
@@ -190,7 +245,6 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
         lineCap: 'round',
       }).addTo(this.leafletMap!);
 
-      // Se já há histórico (reconexão), renderiza tudo
       const hist = this.monitoramento.getHistorico();
       if (hist.length > 0) {
         this.renderizarPercurso(hist);
@@ -198,24 +252,14 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
         this.atualizarMarcadorPos(ultima);
       }
 
-      // invalidateSize: força o Leaflet a recalcular as dimensões do
-      // container após o Angular terminar de renderizar o DOM.
-      // Sem isso, o mapa renderiza "cinza" quando o container não
-      // tinha tamanho definido no momento do L.map().
       setTimeout(() => this.leafletMap?.invalidateSize(), 50);
     });
   }
 
-  /**
-   * Chamado a cada nova coordenada do Firebase.
-   * Atualiza marcador + estende a polyline com o novo ponto.
-   * Roda FORA da zona Angular.
-   */
   private atualizarMapa(coord: Coordenada): void {
     this.atualizarMarcadorPos(coord);
 
     if (this.percursoLine) {
-      // getLatLngs() retorna union type — fazemos cast seguro via unknown
       const atual = (this.percursoLine.getLatLngs() as unknown) as [number, number][];
       atual.push([coord.lat, coord.lng]);
       this.percursoLine.setLatLngs(atual);
@@ -226,9 +270,13 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.leafletMap || !this.marcador) return;
     const pos: [number, number] = [coord.lat, coord.lng];
     this.marcador.setLatLng(pos);
+
+    const delivery = this.selectedDelivery();
+    const label = delivery ? delivery.referenceCode : 'Motorista';
+
     this.marcador.setPopupContent(
       `<div style="font-family:system-ui;font-size:13px;line-height:1.5">
-        <strong>🚛 Motorista 001</strong><br>
+        <strong>🚛 Entrega: ${label}</strong><br>
         <span style="color:#64748b">Lat:</span> ${coord.lat.toFixed(6)}<br>
         <span style="color:#64748b">Lng:</span> ${coord.lng.toFixed(6)}<br>
         <span style="color:#64748b">Precisão:</span> ${coord.precisao.toFixed(0)}m
@@ -237,7 +285,6 @@ export class PainelComponent implements OnInit, AfterViewInit, OnDestroy {
     this.leafletMap.panTo(pos, { animate: true, duration: 0.6 });
   }
 
-  /** Reconstrói a polyline completa a partir do histórico */
   private renderizarPercurso(historico: Coordenada[]): void {
     if (!this.percursoLine) return;
     const latlngs = historico.map((c): [number, number] => [c.lat, c.lng]);
